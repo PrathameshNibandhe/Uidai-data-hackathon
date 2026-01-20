@@ -5,9 +5,6 @@ import plotly.graph_objects as go
 import os
 import numpy as np
 
-# ==========================================
-# 1. PAGE CONFIG
-# ==========================================
 st.set_page_config(page_title="Aadhaar Enrolment Analytics Dashboard", layout="wide")
 
 st.markdown("""
@@ -20,15 +17,13 @@ st.markdown("""
     </style>
     """, unsafe_allow_html=True)
 
-# ==========================================
-# 2. DATA LOADING + STATE NORMALIZATION
-# ==========================================
+
 @st.cache_data
 def load_and_clean_data():
     files = [
-        r'C:\Users\DELL\Desktop\1111\api_data_aadhar_enrolment\api_data_aadhar_enrolment_0_500000.csv', 
-        r'C:\Users\DELL\Desktop\1111\api_data_aadhar_enrolment\api_data_aadhar_enrolment_500000_1000000.csv', 
-        r'C:\Users\DELL\Desktop\1111\api_data_aadhar_enrolment\api_data_aadhar_enrolment_1000000_1006029.csv'
+        r'api_data_aadhar_enrolment_0_500000.csv', 
+        r'api_data_aadhar_enrolment_500000_1000000.csv', 
+        r'api_data_aadhar_enrolment_1000000_1006029.csv'
     ]
     
     df_list = []
@@ -40,7 +35,7 @@ def load_and_clean_data():
     
     df = pd.concat(df_list, ignore_index=True)
     
-    # Numeric enrolment columns
+
     df['child_enrol'] = 0.0
     df['adult_enrol'] = 0.0
     
@@ -62,7 +57,7 @@ def load_and_clean_data():
     
     df['total_enrolments'] = df['child_enrol'] + df['adult_enrol']
     
-    # State standardization
+
     if 'state' in df.columns:
         df['state_raw'] = df['state'].astype(str).str.strip().str.lower()
         state_mapping = {
@@ -93,9 +88,6 @@ if len(df) == 0:
     st.error("No data found!")
     st.stop()
 
-# ==========================================
-# PRE-COMPUTE ANALYSIS TABLES
-# ==========================================
 state_totals = df.groupby('state_clean')['total_enrolments'].sum().sort_values(ascending=False)
 top10_states = state_totals.head(10).reset_index()
 bottom10_states = state_totals.tail(10).reset_index()
@@ -104,9 +96,7 @@ child_vs_adult = df.groupby('state_clean')[['child_enrol', 'adult_enrol']].sum()
 child_vs_adult['total'] = child_vs_adult['child_enrol'] + child_vs_adult['adult_enrol']
 child_vs_adult['child_pct'] = (child_vs_adult['child_enrol'] / child_vs_adult['total'] * 100).round(1)
 
-# ==========================================
-# 3. FILTERS
-# ==========================================
+
 st.sidebar.title("🔍 Filters")
 
 all_states = sorted(df['state_clean'].dropna().unique())
@@ -119,18 +109,16 @@ selected_district = st.sidebar.selectbox("District", ["ALL DISTRICTS"] + list(di
 final_df = state_df if selected_district == "ALL DISTRICTS" else state_df[state_df['district_clean'] == selected_district]
 region_label = f"{selected_state} ({selected_district if selected_district != 'ALL DISTRICTS' else 'All Districts'})"
 
-# ==========================================
-# 4. MAIN DASHBOARD
-# ==========================================
+
 st.title("🛡️ Aadhaar Analytics Dashboard")
 
-# Header metrics
+
 col1, col2 = st.columns(2)
 col1.metric("Region", region_label)
 state_rank = list(state_totals.sort_values(ascending=False).index).index(selected_state) + 1
 col2.metric("State Rank", f"#{state_rank}")
 
-# Main metrics
+
 m1, m2, m3, m4 = st.columns(4)
 total = final_df['total_enrolments'].sum()
 child = final_df['child_enrol'].sum()
@@ -142,9 +130,7 @@ m4.metric("Records", f"{len(final_df):,}")
 
 st.markdown("---")
 
-# ==========================================
-# TOP 10 STATES + TABLES
-# ==========================================
+
 st.subheader("🏆 State Performance Rankings")
 tab1, tab2 = st.tabs(["📊 Charts", "📋 Tables"])
 
@@ -175,9 +161,7 @@ with tab2:
 
 st.markdown("---")
 
-# ==========================================
-# UNIVARIATE ANALYSIS + TABLES
-# ==========================================
+
 st.subheader("📊 Univariate Analysis")
 tab1, tab2 = st.tabs(["📊 Charts", "📋 Tables"])
 
@@ -215,9 +199,7 @@ with tab2:
 
 st.markdown("---")
 
-# ==========================================
-# BIVARIATE ANALYSIS + TABLES
-# ==========================================
+
 st.subheader("📈 Bivariate Analysis")
 tab1, tab2 = st.tabs(["📊 Charts", "📋 Tables"])
 
@@ -251,3 +233,4 @@ with tab2:
         st.dataframe(top_child_states[['child_pct']].style.format({'child_pct': '{:.1f}%'}).background_gradient(), height=400)
 
 st.caption("Aadhaar Enrolment Analytics Dashboard - Charts & Tables")
+
